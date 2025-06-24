@@ -57,7 +57,7 @@ jobs:
               echo "REGISTRY_URL=https://registry.npmjs.org" >> $GITHUB_ENV
               echo "AUDIENCE=npm:registry.npmjs.org" >> $GITHUB_ENV
               echo "TOKEN_EXCHANGE_URL=https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package" >> $GITHUB_ENV
-              echo "WORKING_DIRECTORY=/home/runner/work/saquib-test-pckg/saquib-test-pckg/saquib-test-pckg" >> $GITHUB_ENV
+              echo "WORKING_DIRECTORY=saquib-test-pckg/saquib-test-pckg" >> $GITHUB_ENV
           - name: Extract Package Name from package.json
             if: ${{ github.event.inputs.package_name == '' }}
             id: extract_package_name
@@ -123,7 +123,7 @@ jobs:
               path: npm_token.txt
     
           - name: Configure npm Auth and Publish Package
-            working-directory: ${{ github.event.inputs.package_name == '' && env.WORKING_DIRECTORY || format('/home/runner/work/saquib-test-pckg/saquib-test-pckg/{0}', github.event.inputs.package_name) }}
+            working-directory: ${{ github.event.inputs.package_name == '' && env.WORKING_DIRECTORY || format('/saquib-test-pckg/{0}', github.event.inputs.package_name) }}
             env:
               NODE_AUTH_TOKEN: $npm_TOKEN
             run: |
