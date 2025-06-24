@@ -66,9 +66,6 @@ jobs:
 
       - name: Request OIDC Token from GitHub
         id: request_oidc_idp_token
-        permissions:
-          id-token: write
-          contents: read
         run: |
           echo "🔐 Requesting OIDC ID token for audience: npm:registry.npmjs.org"
           ID_TOKEN=$(echo "${{ steps.generate-id-token.outputs.token }}")
