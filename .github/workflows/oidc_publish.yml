@@ -59,15 +59,13 @@ jobs:
         # Stores package name as an env variable for later use
 
       - name: Request OIDC Token from GitHub
-        # working-directory: saquib-test-pckg
         id: request_oidc_idp_token
+        permissions:
+          id-token: write
+          contents: read
         run: |
           echo "🔐 Requesting OIDC ID token for audience: npm:registry.npmjs.org"
-          CURL_RESPONSE=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org")
-          
-          echo "OIDC Token Response:"
-          echo "$CURL_RESPONSE"
-          ID_TOKEN=$(echo "$CURL_RESPONSE" | jq -r '.value')
+          ID_TOKEN=$(echo "${{ steps.generate-id-token.outputs.token }}")
           if [ -z "$ID_TOKEN" ] || [ "$ID_TOKEN" == "null" ]; then
             echo "❌ Error: Failed to retrieve ID token."
             exit 1
