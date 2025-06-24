@@ -31,9 +31,6 @@ jobs:
 
       - name: Set Up Node.js Environment
         uses: actions/setup-node@v4
-        with:
-        node-version: '20'
-        registry-url: 'https://registry.npmjs.org'
   
       - name: Verify Node.js and npm installation
         run: |
