@@ -51,7 +51,7 @@ jobs:
         if: ${{ github.event.inputs.package_name == '' }}
         id: extract_package_name
         # This step extracts the package name from package.json and sets it as an env variable
-        working-directory: ${{ github.event.inputs.package_name == '' && 'saquib-test-pckg' || format('saquib-test-pckg/{0}', github.event.inputs.package_name) }}
+        working-directory: ${{ github.event.inputs.package_name == '' && './' || format('./{0}', github.event.inputs.package_name) }}
         run: |
           PACKAGE_NAME=$(jq -r '.name' < package.json)
           echo "📦 Package Name: $PACKAGE_NAME"
