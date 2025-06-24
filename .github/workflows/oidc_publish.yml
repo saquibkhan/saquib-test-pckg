@@ -51,7 +51,7 @@ jobs:
           echo "REGISTRY_URL=https://registry.npmjs.org" >> $GITHUB_ENV
           echo "AUDIENCE=npm:registry.npmjs.org" >> $GITHUB_ENV
           echo "TOKEN_EXCHANGE_URL=https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package" >> $GITHUB_ENV
-          echo "WORKING_DIRECTORY=saquib-test-pckg/saquib-test-pckg" >> $GITHUB_ENV
+          echo "WORKING_DIRECTORY=$(basename ${{ github.event.inputs.package_name || 'saquib-test-pckg/saquib-test-pckg' }})" >> $GITHUB_ENV
       
       - name: Extract Package Name from package.json
         if: ${{ github.event.inputs.package_name == '' }}
