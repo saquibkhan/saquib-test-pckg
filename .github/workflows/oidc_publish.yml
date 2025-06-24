@@ -53,14 +53,14 @@ jobs:
           echo "TOKEN_EXCHANGE_URL=https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package" >> $GITHUB_ENV
           echo "WORKING_DIRECTORY=$(basename ${{ github.event.inputs.package_name || 'saquib-test-pckg/saquib-test-pckg' }})" >> $GITHUB_ENV
       
-      - name: Extract Package Name from package.json
-        if: ${{ github.event.inputs.package_name == '' }}
-        id: extract_package_name
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: |
-          PACKAGE_NAME=$(jq -r '.name' < package.json)
-          echo "📦 Package Name: $PACKAGE_NAME"
-          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
+      # - name: Extract Package Name from package.json
+      #   if: ${{ github.event.inputs.package_name == '' }}
+      #   id: extract_package_name
+      #   working-directory: ${{ env.WORKING_DIRECTORY }}
+      #   run: |
+      #     PACKAGE_NAME=$(jq -r '.name' < package.json)
+      #     echo "📦 Package Name: $PACKAGE_NAME"
+      #     echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
 
       - name: Request OIDC IdP Token from GitHub
         id: request_oidc_idp_token
@@ -84,6 +84,8 @@ jobs:
         id: exchange_oidc_token
         run: |
           echo "🔄 Exchanging OIDC ID token for short-lived npm token..."
+
+          PACKAGE_NAME="saquib-test-pckg"
           
           # URL encode the package name (especially important for scoped packages with @scope/name)
           ENCODED_PACKAGE_NAME=$(echo "$PACKAGE_NAME" | sed 's#/#%2f#g')
