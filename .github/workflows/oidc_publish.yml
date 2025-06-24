@@ -68,7 +68,11 @@ jobs:
         id: request_oidc_idp_token
         run: |
           echo "🔐 Requesting OIDC ID token for audience: npm:registry.npmjs.org"
-          ID_TOKEN=$(echo "${{ steps.generate-id-token.outputs.token }}")
+          CURL_RESPONSE=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org")
+          
+          echo "OIDC Token Response:"
+          echo "$CURL_RESPONSE"
+          ID_TOKEN=$(echo "$CURL_RESPONSE" | jq -r '.value')
           if [ -z "$ID_TOKEN" ] || [ "$ID_TOKEN" == "null" ]; then
             echo "❌ Error: Failed to retrieve ID token."
             exit 1
