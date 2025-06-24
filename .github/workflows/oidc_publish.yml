@@ -59,7 +59,7 @@ jobs:
         # Stores package name as an env variable for later use
 
       - name: Request OIDC Token from GitHub
-        working-directory: saquib-test-pckg
+        # working-directory: saquib-test-pckg
         id: request_oidc_idp_token
         run: |
           echo "🔐 Requesting OIDC ID token for audience: npm:registry.npmjs.org"
@@ -77,7 +77,7 @@ jobs:
         # Retrieves OIDC token and stores it for next step
 
       - name: Exchange OIDC Token for npm Token
-        working-directory: saquib-test-pckg
+        # working-directory: saquib-test-pckg
         id: exchange_oidc_token          
         run: |
           echo "🔄 Exchanging OIDC ID token for short-lived npm token..."
