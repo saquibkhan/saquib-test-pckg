@@ -20,128 +20,107 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-          - name: Print Environment Banner
-            run: |
-              echo ""
-              echo "========================================="
-              echo "🚀🚀   RUNNING IN ENVIRONMENT: PRODUCTION   🚀🚀"
-              echo "========================================="
-              echo ""
-              
-          - name: Checkout Repository
-            uses: actions/checkout@v4
-            # This checks out the repo so we can read/write files during the workflow
-    
-          - name: Set Up Node.js Environment
-            uses: actions/setup-node@v4
-            with:
-              node-version: '20'
-              registry-url: 'https://registry.npmjs.org'
-    
-          - name: Verify Node.js and npm installation
-            run: |
-              echo "Node.js version:"
-              node -v
-              echo "npm version:"
-              npm -v
-          - name: Get package name from workflow context
-            id: get_package_name
-            run: |
-              echo "Package name from workflow context: `${{ github.event.inputs.package_name }}`"
-              echo "PACKAGE_NAME=${{ github.event.inputs.package_name }}" >> $GITHUB_ENV
-          - name: Set environment variables for registry
-            id: set_env
-            run: |
-              echo "REGISTRY_URL=https://registry.npmjs.org" >> $GITHUB_ENV
-              echo "AUDIENCE=npm:registry.npmjs.org" >> $GITHUB_ENV
-              echo "TOKEN_EXCHANGE_URL=https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package" >> $GITHUB_ENV
-              echo "WORKING_DIRECTORY=saquib-test-pckg/saquib-test-pckg" >> $GITHUB_ENV
-          - name: Extract Package Name from package.json
-            if: ${{ github.event.inputs.package_name == '' }}
-            id: extract_package_name
-            working-directory: ${{ env.WORKING_DIRECTORY }}
-            run: |
-              PACKAGE_NAME=$(jq -r '.name' < package.json)
-              echo "📦 Package Name: $PACKAGE_NAME"
-              echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
-          - name: Request OIDC IdP Token from GitHub
-            id: request_oidc_idp_token
-            run: |
-              echo "🔐 Requesting OIDC IdP token for audience: $AUDIENCE"
-              CURL_RESPONSE=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=$AUDIENCE")
-              
-              echo "OIDC Token Response:"
-              echo "$CURL_RESPONSE"
-              ID_TOKEN=$(echo "$CURL_RESPONSE" | jq -r '.value')
-              if [ -z "$ID_TOKEN" ] || [ "$ID_TOKEN" == "null" ]; then
-                echo "❌ Error: Failed to retrieve ID token."
-                exit 1
-              fi
-              echo "✅ Successfully retrieved OIDC ID token."
-              echo "ID_TOKEN=$ID_TOKEN" >> $GITHUB_ENV
-            # Retrieves OIDC token and stores it for next step
-    
-          - name: Exchange OIDC Token for npm Token
-            id: exchange_oidc_token
-            run: |
-              echo "🔄 Exchanging OIDC ID token for short-lived npm token..."
-              
-              # URL encode the package name (especially important for scoped packages with @scope/name)
-              ENCODED_PACKAGE_NAME=$(echo "$PACKAGE_NAME" | sed 's#/#%2f#g')
-              echo "Encoded package name: $ENCODED_PACKAGE_NAME"
-              
-              # Update the token exchange URL to include package name
-              TOKEN_EXCHANGE_URL_WITH_PKG="${TOKEN_EXCHANGE_URL}/${ENCODED_PACKAGE_NAME}"
-              echo "Using token exchange URL: $TOKEN_EXCHANGE_URL_WITH_PKG"
-              
-              CURL_RESPONSE=$(curl -s -X POST \
-                -H "Content-Type: application/json" \
-                -H "Authorization: $ID_TOKEN" \
-                "$TOKEN_EXCHANGE_URL_WITH_PKG")
-              echo "npm Token Exchange Response:"
-              echo "$CURL_RESPONSE"
-              npm_TOKEN=$(echo "$CURL_RESPONSE" | jq -r '.token')
-              if [ -z "$npm_TOKEN" ] || [ "$npm_TOKEN" == "null" ]; then
-                echo "❌ Error: Failed to retrieve npm token."
-                exit 1
-              fi
-              echo "✅ Successfully retrieved npm token."
-              echo "npm Token: $npm_TOKEN"
-              echo "npm_TOKEN=$npm_TOKEN" >> $GITHUB_ENV
-            # Exchanges OIDC token for a publishable npm token
-    
-          - name: Save npm token to file
-            run: |
-              echo "$npm_TOKEN" > npm_token.txt
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        # This checks out the repo so we can read/write files during the workflow
+
+      - name: Set Up Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+        # This installs Node.js v20 and sets the npm registry to your production registry
+
+      - name: Verify Node.js and npm installation
+        run: |
+          echo "Node.js version:"
+          node -v
+          echo "npm version:"
+          npm -v
+        # Quick sanity check to make sure Node and npm are available
+
+        # This step is optional and can be used to debug or log the package name
+        # passed as an input to the workflow. It can be removed if not needed.
+      - name: Get package name from workflow context
+        id: get_package_name
+        run: |
+          echo "Package name from workflow context: ${{ github.event.inputs.package_name }}"
+        # extract if not passed as input 
+      - name: Extract Package Name from package.json
+        if: ${{ github.event.inputs.package_name == '' }}
+        id: extract_package_name
+        # This step extracts the package name from package.json and sets it as an env variable
+        working-directory: dhei/oidc/production/dhei-prod-oidc0
+        run: |
+          PACKAGE_NAME=$(jq -r '.name' < package.json)
+          echo "📦 Package Name: $PACKAGE_NAME"
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
+        # Stores package name as an env variable for later use
+
+      - name: Request OIDC Token from GitHub
+        working-directory: dhei/oidc/production/dhei-prod-oidc0
+        id: request_oidc_idp_token
+        run: |
+          echo "🔐 Requesting OIDC ID token for audience: npm:registry.npmjs.org"
+          CURL_RESPONSE=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org")
           
-          - name: Upload npm token artifact
-            uses: actions/upload-artifact@v4
-            with:
-              name: npm-token
-              path: npm_token.txt
-    
-          - name: Configure npm Auth and Publish Package
-            working-directory: ${{ github.event.inputs.package_name == '' && env.WORKING_DIRECTORY || format('/saquib-test-pckg/{0}', github.event.inputs.package_name) }}
-            env:
-              NODE_AUTH_TOKEN: $npm_TOKEN
-            run: |
-              echo "🔧 Setting npm auth token and publishing..."
-              
-              echo "" > "$(npm config get userconfig)"
-              npm config set //registry.npmjs.org/:_authToken "$npm_TOKEN"
-              echo "🧾 npm config:"
-              npm config list
-              # Update package.json version if package_version input is provided
-              if [ "${{ github.event.inputs.package_version }}" != "" ]; then
-                echo "📦 Updating package version to ${{ github.event.inputs.package_version }}"
-                npm version --no-git-tag-version ${{ github.event.inputs.package_version }}
-              fi
-              if [ "${{ github.event.inputs.npm_publish_flags }}" != "" ]; then
-                echo "🚀 Running npm publish with extra flags: ${{ github.event.inputs.npm_publish_flags }}"
-              else
-                echo "🚀 Running npm publish"
-              fi
-              npm publish ${{ github.event.inputs.npm_publish_flags }}
-              echo "✅ Package published successfully."
+          echo "OIDC Token Response:"
+          echo "$CURL_RESPONSE"
+          ID_TOKEN=$(echo "$CURL_RESPONSE" | jq -r '.value')
+          if [ -z "$ID_TOKEN" ] || [ "$ID_TOKEN" == "null" ]; then
+            echo "❌ Error: Failed to retrieve ID token."
+            exit 1
+          fi
+          echo "✅ Successfully retrieved OIDC ID token."
+          echo "ID_TOKEN=$ID_TOKEN" >> $GITHUB_ENV
+        # Retrieves OIDC token and stores it for next step
+
+      - name: Exchange OIDC Token for npm Token
+        working-directory: dhei/oidc/production/dhei-prod-oidc0
+        id: exchange_oidc_token          
+        run: |
+          echo "🔄 Exchanging OIDC ID token for short-lived npm token..."
+          RESPONSE_BODY=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: $ID_TOKEN" \
+            "https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/${PACKAGE_NAME}")
+          # Extract status code (last line of response)
+          HTTP_STATUS=$(echo "$RESPONSE_BODY" | tail -n1)
+          # Extract actual response body (everything except the last line)
+          CURL_RESPONSE=$(echo "$RESPONSE_BODY" | sed '$d')
+          
+          echo "Status Code: $HTTP_STATUS"
+          echo "Response Body: $CURL_RESPONSE"
+          npm_TOKEN=$(echo "$CURL_RESPONSE" | jq -r '.token')
+          if [ -z "$npm_TOKEN" ] || [ "$npm_TOKEN" == "null" ]; then
+            echo "❌ Error: Failed to retrieve npm token."
+            exit 1
+          fi
+          echo "✅ Successfully retrieved npm token."
+          echo "npm Token: $npm_TOKEN"
+          echo "npm_TOKEN=$npm_TOKEN" >> $GITHUB_ENV
+        # Exchanges OIDC token for a publishable npm token
+
+      - name: Save npm token to file
+        run: |
+          echo "$npm_TOKEN" > npm_token.txt
+      
+      - name: Upload npm token artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-token
+          path: npm_token.txt
+
+      - name: Configure npm Auth and Publish Package
+        working-directory: ${{ github.event.inputs.package_name == '' && 'dhei/oidc/production/dhei-prod-oidc0' || format('dhei/oidc/production/{0}', github.event.inputs.package_name) }}
+        run: |
+          echo "🔧 Setting npm auth token and publishing..."
+          echo "" > "$(npm config get userconfig)"
+          npm config set //registry.npmjs.org/:_authToken "$npm_TOKEN"
+          echo "🧾 npm config:"
+          npm config list
+          echo "🚀 Running npm publish..."
+          npm publish
+          echo "✅ Package published successfully."
