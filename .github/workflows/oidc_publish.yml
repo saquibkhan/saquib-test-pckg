@@ -79,7 +79,6 @@ jobs:
           fi
           echo "✅ Successfully retrieved OIDC ID token."
           echo "ID_TOKEN=$ID_TOKEN" >> $GITHUB_ENV
-        # Retrieves OIDC token and stores it for next step
 
       - name: Exchange OIDC Token for npm Token
         # working-directory: saquib-test-pckg
@@ -119,7 +118,7 @@ jobs:
           path: npm_token.txt
 
       - name: Configure npm Auth and Publish Package
-        working-directory: ${{ github.event.inputs.package_name == '' && 'dhei/oidc/production/dhei-prod-oidc0' || format('dhei/oidc/production/{0}', github.event.inputs.package_name) }}
+        # working-directory: ${{ github.event.inputs.package_name == '' && 'dhei/oidc/production/dhei-prod-oidc0' || format('dhei/oidc/production/{0}', github.event.inputs.package_name) }}
         run: |
           echo "🔧 Setting npm auth token and publishing..."
           echo "" > "$(npm config get userconfig)"
