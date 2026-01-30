@@ -1,6 +1,6 @@
 {
   "name": "saquib-test-pckg",
-  "version": "2.0.1",
+  "version": "3.0.4",
   "description": "test",
   "main": "index.js",
   "scripts": {
